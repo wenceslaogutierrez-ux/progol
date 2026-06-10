@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROGOL MUNDIAL - Apuestas Deportivas Mundial 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',    /* slate-900 */
+                            card: '#1e293b',    /* slate-800 */
+                            accent: '#eab308',  /* yellow-500 */
+                            success: '#22c55e', /* green-500 */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .odd-btn, .edit-indicator { transition: all 0.2s ease-in-out; }
+        .odd-btn:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="bg-brand-dark text-slate-300 font-sans antialiased overflow-x-hidden">
+
+    <nav class="bg-brand-card border-b border-slate-700 fixed w-full z-50 top-0">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-brand-accent text-2xl"></i>
+                    <span class="text-white font-black text-xl tracking-wider">PROGOL MUNDIAL</span>
+                </div>
+                <div>
+                    <button id="authBtn" onclick="toggleAuthModal()" class="text-sm bg-slate-700 hover:bg-slate-600 text-white py-1 px-3 rounded border border-slate-600 transition">
+                        <i class="fa-solid fa-user-lock mr-1"></i> Admin Login
+                    </button>
+                    <button id="logoutBtn" onclick="logout()" class="hidden text-sm bg-red-600 hover:bg-red-500 text-white py-1 px-3 rounded transition">
+                        <i class="fa-solid fa-sign-out-alt mr-1"></i> Salir (Admin)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="pt-16 max-w-screen-2xl mx-auto flex flex-col lg:flex-row h-screen">
+        
+        <aside class="hidden lg:block w-64 bg-brand-card border-r border-slate-700 h-full fixed left-0 top-16 overflow-y-auto p-4">
+            <ul class="space-y-2">
+                <li><a href="#" class="flex items-center gap-3 bg-slate-700 text-white p-3 rounded-lg"><i class="fa-solid fa-futbol text-brand-accent"></i> Partidos Destacados</a></li>
+                <li><a href="#futures" class="flex items-center gap-3 hover:bg-slate-700 text-slate-300 p-3 rounded-lg transition"><i class="fa-solid fa-globe text-brand-accent"></i> Campeón del Mundo</a></li>
+                <li class="pt-4 pb-2 text-xs text-slate-500 uppercase font-bold">Pagos Aceptados</li>
+                <li class="flex items-center gap-3 p-2 text-sm"><i class="fa-brands fa-telegram text-blue-400 text-lg"></i> Telegram Stars</li>
+                <li class="flex items-center gap-3 p-2 text-sm"><i class="fa-brands fa-bitcoin text-orange-400 text-lg"></i> Criptomonedas (USDT/BTC)</li>
+            </ul>
+        </aside>
+
+        <main class="flex-1 lg:ml-64 lg:mr-80 p-4 lg:p-6 overflow-y-auto pb-32 lg:pb-6">
+            
+            <div id="adminNotice" class="hidden mb-6 bg-brand-accent text-black font-bold p-4 rounded-xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-xl"></i>
+                    <div>
+                        <p class="text-sm font-black">MODO ADMINISTRADOR ACTIVO</p>
+                        <p class="text-xs font-normal opacity-85">Haz clic en cuotas o nombres de equipos para editarlos en tiempo real.</p>
+                    </div>
+                </div>
+                <button onclick="toggleAddMatchModal()" class="w-full sm:w-auto bg-slate-900 text-brand-accent hover:bg-slate-950 px-4 py-2 rounded-lg text-sm font-black flex items-center justify-center gap-2 transition shadow-md">
+                    <i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Partido
+                </button>
+            </div>
+
+            <h2 class="text-2xl font-bold text-white mb-6 border-l-4 border-brand-accent pl-3">Partidos del Mundial 2026</h2>
+            <div id="matchesContainer" class="space-y-6">
+                </div>
+
+            <h2 id="futures" class="text-2xl font-bold text-white mt-12 mb-6 border-l-4 border-brand-accent pl-3">Apuesta a Futuro: ¿Quién ganará el Mundial?</h2>
+            <div class="bg-brand-card border border-slate-700 rounded-xl p-4 shadow-lg">
+                <div id="futuresContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    </div>
+            </div>
+        </main>
+
+        <aside class="fixed bottom-0 lg:top-16 right-0 w-full lg:w-80 bg-brand-card border-t lg:border-l lg:border-t-0 border-slate-700 h-auto lg:h-[calc(100vh-4rem)] flex flex-col shadow-2xl z-40 transition-transform transform translate-y-0">
+            <div class="bg-slate-900 p-4 border-b border-slate-700 flex justify-between items-center cursor-pointer lg:cursor-auto" onclick="toggleMobileBetSlip()">
+                <h3 class="text-white font-bold text-lg"><i class="fa-solid fa-receipt text-brand-accent mr-2"></i> Boleto de Apuestas</h3>
+                <span id="betCountBadge" class="bg-brand-accent text-black text-xs font-bold px-2 py-1 rounded-full">0</span>
+            </div>
+            
+            <div id="betSlipContent" class="flex-1 overflow-y-auto p-4 space-y-3 hidden lg:block">
+                <div id="emptySlipMsg" class="text-slate-500 text-center py-8 text-sm">
+                    Tu boleto está vacío.<br>Haz clic en una cuota para añadir.
+                </div>
+                <div id="betList" class="space-y-3">
+                    </div>
+            </div>
+
+            <div id="betSlipFooter" class="p-4 bg-slate-900 border-t border-slate-700 hidden lg:block">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-slate-400">Cuota Total:</span>
+                    <span id="totalOdds" class="text-white font-bold">0.00</span>
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm text-slate-400">Importe (USD):</span>
+                    <input type="number" id="stakeInput" value="10" min="1" class="w-20 bg-slate-800 border border-slate-600 text-white rounded p-1 text-right focus:outline-none focus:border-brand-accent" oninput="calculatePayout()">
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm font-bold text-slate-300">Pago Potencial:</span>
+                    <span id="potentialPayout" class="text-brand-success font-black text-xl">$0.00</span>
+                </div>
+                <button onclick="checkoutTelegram()" class="w-full bg-brand-success hover:bg-green-400 text-black font-black py-3 rounded-lg flex justify-center items-center gap-2 transition shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                    <i class="fa-brands fa-telegram text-xl"></i> Apostar vía Telegram
+                </button>
+                <p class="text-center text-xs text-slate-500 mt-2">Pagos vía Telegram Stars / Cripto</p>
+            </div>
+        </aside>
+
+    </div>
+
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-slate-700 rounded-xl p-6 w-full max-w-sm shadow-2xl relative">
+            <button onclick="toggleAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            <h3 class="text-xl font-bold text-white mb-4 text-center">Acceso Administrador</h3>
+            <p class="text-xs text-slate-400 mb-4 text-center">Credenciales de prueba: admin / 1234</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Usuario</label>
+                    <input type="text" id="adminUser" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 focus:border-brand-accent focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">Contraseña</label>
+                    <input type="password" id="adminPass" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 focus:border-brand-accent focus:outline-none">
+                </div>
+                <button onclick="login()" class="w-full bg-brand-accent hover:bg-yellow-400 text-black font-bold py-2 rounded transition">Ingresar</button>
+                <p id="loginError" class="text-red-500 text-sm hidden text-center mt-2">Credenciales incorrectas.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="addMatchModal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl relative">
+            <button onclick="toggleAddMatchModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2 text-brand-accent"><i class="fa-solid fa-circle-plus"></i> Crear Nuevo Partido</h3>
+            <p class="text-xs text-slate-400 mb-4">El partido se añadirá al catálogo con cuotas base listas para ser editadas en pantalla.</p>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1 uppercase tracking-wide">Selección Local</label>
+                        <input type="text" id="newTeam1" placeholder="Ej. Brasil" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 text-sm focus:border-brand-accent focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1 uppercase tracking-wide">Selección Visitante</label>
+                        <input type="text" id="newTeam2" placeholder="Ej. Francia" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 text-sm focus:border-brand-accent focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 uppercase tracking-wide">Fecha, Hora y Detalles</label>
+                    <input type="text" id="newMatchDate" placeholder="Ej. 18 Jun 2026 - 16:00" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 text-sm focus:border-brand-accent focus:outline-none">
+                </div>
+                <div class="pt-2">
+                    <button onclick="addNewMatch()" class="w-full bg-brand-success hover:bg-green-400 text-black font-black py-2.5 rounded-lg transition shadow-md">
+                        Publicar Partido en la Plataforma
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STATE (Simulated Database) ---
+        let isAdmin = false;
+        let betSlip = [];
+
+        // Seed initial matches dataset
+        const matches = [
+            {
+                id: 'm1',
+                team1: "México",
+                team2: "Estados Unidos",
+                date: "11 Jun 2026 - 20:00 (Inauguración)",
+                odds: {
+                    matchWinner: { label: "1X2 (Resultado Final)", marketKey: 'matchWinner', options: [ {id: '1', name: "1", val: 2.80}, {id: 'x', name: "X", val: 3.20}, {id: '2', name: "2", val: 2.50} ] },
+                    totalGoals: { label: "Goles Totales (2.5)", marketKey: 'totalGoals', options: [ {id: 'o', name: "Más de 2.5", val: 1.95}, {id: 'u', name: "Menos de 2.5", val: 1.85} ] },
+                    btts: { label: "Ambos Anotan", marketKey: 'btts', options: [ {id: 'y', name: "Sí", val: 1.75}, {id: 'n', name: "No", val: 2.05} ] },
+                    redCard: { label: "Tarjeta Roja", marketKey: 'redCard', options: [ {id: 'y', name: "Sí", val: 3.50}, {id: 'n', name: "No", val: 1.25} ] }
+                }
+            },
+            {
+                id: 'm2',
+                team1: "Argentina",
+                team2: "España",
+                date: "12 Jun 2026 - 15:00",
+                odds: {
+                    matchWinner: { label: "1X2 (Resultado Final)", marketKey: 'matchWinner', options: [ {id: '1', name: "1", val: 2.60}, {id: 'x', name: "X", val: 3.30}, {id: '2', name: "2", val: 2.70} ] },
+                    totalGoals: { label: "Goles Totales (2.5)", marketKey: 'totalGoals', options: [ {id: 'o', name: "Más de 2.5", val: 2.10}, {id: 'u', name: "Menos de 2.5", val: 1.70} ] },
+                    btts: { label: "Ambos Anotan", marketKey: 'btts', options: [ {id: 'y', name: "Sí", val: 1.85}, {id: 'n', name: "No", val: 1.95} ] },
+                    redCard: { label: "Tarjeta Roja", marketKey: 'redCard', options: [ {id: 'y', name: "Sí", val: 4.00}, {id: 'n', name: "No", val: 1.20} ] }
+                }
+            }
+        ];
+
+        // Seed initial futures dataset
+        const futures = [
+            { id: 'f1', team: 'Brasil', val: 5.50 },
+            { id: 'f2', team: 'Francia', val: 6.00 },
+            { id: 'f3', team: 'Inglaterra', val: 7.50 },
+            { id: 'f4', team: 'Argentina', val: 8.00 },
+            { id: 'f5', team: 'España', val: 9.00 },
+            { id: 'f6', team: 'Alemania', val: 11.00 },
+            { id: 'f7', team: 'México', val: 35.00 },
+            { id: 'f8', team: 'EEUU', val: 40.00 }
+        ];
+
+        // --- RENDER LOGIC ---
+        function renderApp() {
+            renderMatches();
+            renderFutures();
+            renderBetSlip();
+        }
+
+        function formatOddBtn(val, onClickHandler) {
+            const adminClasses = isAdmin ? 'border border-dashed border-brand-accent text-brand-accent hover:bg-slate-700 bg-slate-900/40' : 'bg-slate-700 hover:bg-slate-600 text-white';
+            return `<button onclick="${onClickHandler}" class="odd-btn flex-1 py-2 px-1 rounded font-bold text-sm ${adminClasses}">
+                        ${val.toFixed(2)}
+                    </button>`;
+        }
+
+        function renderMatches() {
+            const container = document.getElementById('matchesContainer');
+            container.innerHTML = '';
+
+            matches.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'bg-brand-card border border-slate-700 rounded-xl overflow-hidden shadow-lg';
+                
+                let marketsHtml = '';
+                for(const [key, market] of Object.entries(m.odds)) {
+                    let buttonsHtml = market.options.map(opt => {
+                        const evt = `handleOddClick('m', '${m.id}', '${market.label}', '${opt.name}', '${key}', '${opt.id}')`;
+                        return `<div class="flex flex-col items-center flex-1">
+                                    <span class="text-xs text-slate-400 mb-1">${opt.name}</span>
+                                    ${formatOddBtn(opt.val, evt)}
+                                </div>`;
+                    }).join('');
+
+                    marketsHtml += `
+                        <div class="bg-slate-900/50 p-3 rounded-lg">
+                            <div class="text-xs font-bold text-slate-300 mb-2 text-center uppercase tracking-wider">${market.label}</div>
+                            <div class="flex gap-2">${buttonsHtml}</div>
+                        </div>
+                    `;
+                }
+
+                // Admin indicators on team titles
+                const editTeamClass = isAdmin ? 'border border-dashed border-brand-accent/60 hover:border-brand-accent px-2 py-1 rounded cursor-pointer text-brand-accent transition' : 'text-white';
+                const editTeam1Event = isAdmin ? `onclick="editTeamName('${m.id}', 'team1')"` : '';
+                const editTeam2Event = isAdmin ? `onclick="editTeamName('${m.id}', 'team2')"` : '';
+
+                card.innerHTML = `
+                    <div class="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+                        <div class="flex items-center gap-4 w-full">
+                            <div ${editTeam1Event} class="flex-1 text-right font-black text-lg ${editTeamClass}">
+                                ${m.team1} ${isAdmin ? '<i class="fa-solid fa-pen text-xs ml-1 opacity-70"></i>' : ''}
+                            </div>
+                            <div class="px-3 py-1 bg-slate-900 rounded text-xs font-bold text-slate-400 text-center whitespace-nowrap">
+                                <i class="fa-regular fa-clock"></i><br>${m.date}
+                            </div>
+                            <div ${editTeam2Event} class="flex-1 text-left font-black text-lg ${editTeamClass}">
+                                ${m.team2} ${isAdmin ? '<i class="fa-solid fa-pen text-xs ml-1 opacity-70"></i>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        ${marketsHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderFutures() {
+            const container = document.getElementById('futuresContainer');
+            container.innerHTML = '';
+            
+            futures.forEach(f => {
+                const evt = `handleOddClick('f', '${f.id}', 'Campeón del Mundo 2026', '${f.team}', 'outright', '${f.id}')`;
+                const adminClasses = isAdmin ? 'border border-dashed border-brand-accent bg-slate-800' : 'border border-slate-700 hover:border-brand-accent bg-slate-900';
+                
+                container.innerHTML += `
+                    <div onclick="${evt}" class="rounded-lg p-3 flex justify-between items-center cursor-pointer transition ${adminClasses}">
+                        <span class="text-white font-bold">${f.team}</span>
+                        <span class="text-brand-accent font-black">${f.val.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // --- INTERACTION / CONTROL LOGIC ---
+        function handleOddClick(type, eventId, marketLabel, selectionName, marketKey, optionId) {
+            if (isAdmin) {
+                // Admin Mode: Edit Target Odd value
+                let targetObj = null;
+
+                if (type === 'm') {
+                    const match = matches.find(m => m.id === eventId);
+                    targetObj = match.odds[marketKey].options.find(o => o.id === optionId);
+                } else if (type === 'f') {
+                    targetObj = futures.find(f => f.id === eventId);
+                }
+
+                if (targetObj) {
+                    const newVal = prompt(`MODO ADMIN: Ingresa la nueva cuota para [${selectionName}]:`, targetObj.val);
+                    if (newVal !== null && !isNaN(parseFloat(newVal))) {
+                        targetObj.val = Math.max(1.01, parseFloat(newVal));
+                        renderApp();
+                    }
+                }
+            } else {
+                // User Mode: Add selection to Bet Slip
+                let eventName = "";
+                let oddValue = 0;
+
+                if(type === 'm') {
+                    const match = matches.find(m => m.id === eventId);
+                    eventName = `${match.team1} vs ${match.team2}`;
+                    oddValue = match.odds[marketKey].options.find(o => o.id === optionId).val;
+                } else {
+                    eventName = "Campeón del Mundo 2026";
+                    oddValue = futures.find(f => f.id === eventId).val;
+                }
+
+                const betId = `${eventId}-${marketKey}-${optionId}`;
+                
+                if (!betSlip.find(b => b.id === betId)) {
+                    betSlip.push({ id: betId, eventName, marketLabel, selectionName, oddValue });
+                    renderBetSlip();
+                    
+                    const betSlipContent = document.getElementById('betSlipContent');
+                    if (window.innerWidth < 1024 && betSlipContent.classList.contains('hidden')) {
+                        toggleMobileBetSlip();
+                    }
+                }
+            }
+        }
+
+        // Admin functionality: Edit dynamic team names
+        function editTeamName(matchId, teamField) {
+            if (!isAdmin) return;
+            const match = matches.find(m => m.id === matchId);
+            if (!match) return;
+
+            const currentName = match[teamField];
+            const newName = prompt(`MODO ADMIN: Modificar nombre de la selección (${teamField === 'team1' ? 'Local' : 'Visitante'}):`, currentName);
+            
+            if (newName && newName.trim() !== "") {
+                match[teamField] = newName.trim();
+                renderApp();
+            }
+        }
+
+        // Admin functionality: Dynamically append new matches to state
+        function addNewMatch() {
+            const t1 = document.getElementById('newTeam1').value.trim();
+            const t2 = document.getElementById('newTeam2').value.trim();
+            const date = document.getElementById('newMatchDate').value.trim() || "15 Jun 2026 - 18:00";
+
+            if (!t1 || !t2) {
+                alert("Por favor, introduce el nombre de ambas selecciones.");
+                return;
+            }
+
+            const uniqueId = 'm_' + Date.now();
+            
+            // Build fresh clean match object with flexible market architecture
+            matches.push({
+                id: uniqueId,
+                team1: t1,
+                team2: t2,
+                date: date,
+                odds: {
+                    matchWinner: { label: "1X2 (Resultado Final)", marketKey: 'matchWinner', options: [ {id: '1', name: "1", val: 2.00}, {id: 'x', name: "X", val: 3.10}, {id: '2', name: "2", val: 2.00} ] },
+                    totalGoals: { label: "Goles Totales (2.5)", marketKey: 'totalGoals', options: [ {id: 'o', name: "Más de 2.5", val: 1.90}, {id: 'u', name: "Menos de 2.5", val: 1.90} ] },
+                    btts: { label: "Ambos Anotan", marketKey: 'btts', options: [ {id: 'y', name: "Sí", val: 1.85}, {id: 'n', name: "No", val: 1.85} ] },
+                    redCard: { label: "Tarjeta Roja", marketKey: 'redCard', options: [ {id: 'y', name: "Sí", val: 3.50}, {id: 'n', name: "No", val: 1.25} ] }
+                }
+            });
+
+            // Clean form inputs
+            document.getElementById('newTeam1').value = '';
+            document.getElementById('newTeam2').value = '';
+            document.getElementById('newMatchDate').value = '';
+
+            toggleAddMatchModal();
+            renderApp();
+        }
+
+        function removeBet(betId) {
+            betSlip = betSlip.filter(b => b.id !== betId);
+            renderBetSlip();
+        }
+
+        function renderBetSlip() {
+            const list = document.getElementById('betList');
+            const emptyMsg = document.getElementById('emptySlipMsg');
+            const badge = document.getElementById('betCountBadge');
+            
+            badge.innerText = betSlip.length;
+            list.innerHTML = '';
+
+            if (betSlip.length === 0) {
+                emptyMsg.style.display = 'block';
+                document.getElementById('totalOdds').innerText = '0.00';
+                document.getElementById('potentialPayout').innerText = '$0.00';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            let totalOdds = 1;
+
+            betSlip.forEach(b => {
+                totalOdds *= b.oddValue;
+                list.innerHTML += `
+                    <div class="bg-slate-800 p-3 rounded relative border border-slate-700">
+                        <button onclick="removeBet('${b.id}')" class="absolute top-2 right-2 text-slate-500 hover:text-red-400"><i class="fa-solid fa-times"></i></button>
+                        <div class="text-xs text-slate-400 mb-1 truncate pr-6">${b.eventName}</div>
+                        <div class="text-sm text-white font-bold">${b.marketLabel}: ${b.selectionName}</div>
+                        <div class="text-brand-accent font-black text-right mt-1">${b.oddValue.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('totalOdds').innerText = totalOdds.toFixed(2);
+            calculatePayout(totalOdds);
+        }
+
+        function calculatePayout(precalcOdds = null) {
+            const stake = parseFloat(document.getElementById('stakeInput').value) || 0;
+            let totalOdds = precalcOdds;
+            
+            if (!totalOdds) {
+                totalOdds = betSlip.reduce((acc, curr) => acc * curr.oddValue, 1);
+            }
+            
+            const payout = betSlip.length > 0 ? (stake * totalOdds) : 0;
+            document.getElementById('potentialPayout').innerText = `$${payout.toFixed(2)}`;
+        }
+
+        // --- TELEGRAM STREAM INTEGRATION ---
+        function checkoutTelegram() {
+            if (betSlip.length === 0) {
+                alert("Tu boleto está vacío. Añade selecciones antes de apostar.");
+                return;
+            }
+            const stake = document.getElementById('stakeInput').value;
+            const payload = {
+                stake: stake,
+                bets: betSlip.map(b => ({ s: b.selectionName, o: b.oddValue }))
+            };
+            const codigoApuesta = btoa(JSON.stringify(payload)).substring(0, 15);
+            const botUrl = `https://t.me/TuBotMundial2026_bot?start=${codigoApuesta}`;
+            window.open(botUrl, '_blank');
+        }
+
+        // --- UI VISIBILITY CONTROL ---
+        function toggleAuthModal() {
+            const modal = document.getElementById('loginModal');
+            modal.classList.toggle('hidden');
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        function toggleAddMatchModal() {
+            const modal = document.getElementById('addMatchModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function login() {
+            const u = document.getElementById('adminUser').value;
+            const p = document.getElementById('adminPass').value;
+            
+            if (u === 'admin' && p === '1234') {
+                isAdmin = true;
+                toggleAuthModal();
+                document.getElementById('authBtn').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                document.getElementById('adminNotice').classList.remove('hidden');
+                
+                betSlip = []; // Flush active slips when entering control panel
+                renderApp();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            isAdmin = false;
+            document.getElementById('authBtn').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('adminNotice').classList.add('hidden');
+            document.getElementById('adminUser').value = '';
+            document.getElementById('adminPass').value = '';
+            renderApp();
+        }
+
+        function toggleMobileBetSlip() {
+            if (window.innerWidth >= 1024) return;
+            const content = document.getElementById('betSlipContent');
+            const footer = document.getElementById('betSlipFooter');
+            
+            content.classList.toggle('hidden');
+            footer.classList.toggle('hidden');
+        }
+
+        // Initialize state
+        renderApp();
+    </script>
+</body>
+</html>
